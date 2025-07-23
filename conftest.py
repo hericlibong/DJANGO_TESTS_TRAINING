@@ -1,6 +1,35 @@
 import pytest
 from core.models import Book, Author
 
+from rest_framework.test import APIClient
+from django.contrib.auth import get_user_model
+
+@pytest.fixture
+def user_factory(db):
+    def _create_user(username="bob", password="pass", **kwargs):
+        User = get_user_model()
+        defaults = dict(is_staff=True, is_superuser=True)  # droits maxi → pas de 403 “permission”
+        defaults.update(kwargs)
+        return User.objects.create_user(username=username, password=password, **defaults)
+    return _create_user
+
+
+@pytest.fixture
+def api_client():
+    return APIClient()
+
+
+@pytest.fixture
+def authenticated_api_client(user_factory):
+    """
+    Client DRF déjà authentifié **via la méthode** de l’APIClient.
+    """
+    user = user_factory()
+    client = APIClient()
+    client.force_authenticate(user=user)        # ← LA bonne méthode
+    return client
+
+
 
 @pytest.fixture
 def author_factory(db):
